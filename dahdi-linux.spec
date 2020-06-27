@@ -121,13 +121,14 @@ echo 'obj-m += echo.o' > drivers/staging/echo/Kbuild
 find /usr/src/linux/drivers -name oslec.h -exec cp -v {} drivers/staging/echo/ \;
 %endif
 # Firmwares
-%{__cp} %{S:1} /
-pushd linux
+#%{__cp} %{S:1} /
+#pushd linux
 #%{__tar} -zxf drivers/dahdi/firmware/dahdi-fwload-*.tar.gz
 %{__tar} -xf *.tar.xz
-popd
+#popd
 
 pushd drivers/dahdi/firmware
+%{__tar} -xf *.tar.xz
 for fw in *.tar.gz*
 do
   %{__tar} -zxf ${fw}

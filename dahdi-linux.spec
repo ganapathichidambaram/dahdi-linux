@@ -110,10 +110,10 @@ done
 %{__mkdir} drivers/staging
 %if 0%{?build_echo}
 %if 0%{?suse_version}
-%{__cp} -r /usr/src/linux/drivers/staging/echo linux/drivers/staging/
+%{__cp} -r /usr/src/linux/drivers/staging/echo drivers/staging/
 %else
-%{__tar} -zxf %{S:99} -C linux/drivers/staging
-%{__mv} linux/drivers/staging/linux-* linux/drivers/staging/echo
+%{__tar} -zxf %{S:99} -C drivers/staging
+%{__mv} drivers/staging/linux-* drivers/staging/echo
 %endif
 echo 'obj-m += echo.o' > drivers/staging/echo/Kbuild
 %else

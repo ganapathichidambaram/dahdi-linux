@@ -51,7 +51,7 @@ BuildRequires: python3-libs python3
 BuildRequires: ppp-devel
 BuildRequires: libusb-devel libselinux-devel udev
 BuildRoot:     %{_tmppath}/%{name}-%{version}-build
-Source0:       http://downloads.asterisk.org/pub/telephony/dahdi-linux-complete/releases/%{realname}-%{drvver}+%{utilver}.%{srcext}
+Source0:       http://downloads.asterisk.org/pub/telephony/dahdi-linux-complete/releases/%{realname}-%{drvver}.%{srcext}
 Source1:      firmware-20180403.tar.xz
 
 # RHEL and derivatives comes without kernel-source package
@@ -67,7 +67,7 @@ Source1:      firmware-20180403.tar.xz
 #Patch11:       https://issues.asterisk.org/jira/secure/attachment/55523/0001-signal_pending-is-now-in-linux-sched-signal.h-includ.patch
 #Patch12:       https://issues.asterisk.org/jira/secure/attachment/55524/0002-atomic_read-refcount_read.patch
 
-#%kernel_module_package %{?suse_version:-p %_sourcedir/preamble} -x kdump -x um -x ec2 -x debug
+
 
 %description
 DAHDI Telephony Interface Driver.
@@ -88,7 +88,7 @@ Requires:      ppp = %{ppp_pkg_version}
 pppd plugin to implement PPP over DAHDI HDLC channel.
 
 %prep
-%setup -n %{realname}-%{drvver}+%{utilver}
+%setup -n %{realname}-%{drvver}
 #%patch11 -p1 -d linux
 #%patch12 -p1 -d linux
 # GCC >= 5.x support

@@ -155,21 +155,21 @@ for flavor in %flavors_to_build; do
       DAHDI_BUILD_ALL=m
 done
 popd
-pushd tools
-%configure \
- --with-dahdi=%{topdir}/linux \
- --with-usb \
- --with-selinux \
- --with-ppp \
- CFLAGS="%{optflags} -Wno-format-truncation" \
- LDFLAGS="-Wl,--as-needed -Wl,--strip-all"
+#pushd tools
+#%configure \
+# --with-dahdi=%{topdir}/linux \
+# --with-usb \
+# --with-selinux \
+# --with-ppp \
+# CFLAGS="%{optflags} -Wno-format-truncation" \
+# LDFLAGS="-Wl,--as-needed -Wl,--strip-all"
 # Disable am--refresh target
-%{__sed} -ri \
- -e 's/^\tam--refresh /\t/' \
- -e '/^am--refresh/,/^$/ d' \
- Makefile
-%{__make} %{?_smp_mflags} all
-popd
+#%{__sed} -ri \
+# -e 's/^\tam--refresh /\t/' \
+# -e '/^am--refresh/,/^$/ d' \
+# Makefile
+#%{__make} %{?_smp_mflags} all
+#popd
 
 %install
 export INSTALL_MOD_PATH=$RPM_BUILD_ROOT
@@ -178,7 +178,7 @@ export INSTALL_MOD_DIR=updates
 %else
 export INSTALL_MOD_DIR=extra/%{name}
 %endif
-%{__make} -C linux \
+%{__make} \
  install-include \
  install-firmware \
  install-xpp-firm \
@@ -197,7 +197,7 @@ pushd tools
 %{__make} install DESTDIR=%{buildroot}
 %{__make} config  DESTDIR=%{buildroot}
 popd
-%{__install} -D -m755 tools/dahdi.init    %{buildroot}%{_initrddir}/dahdi
+#%{__install} -D -m755 tools/dahdi.init    %{buildroot}%{_initrddir}/dahdi
 %{__install}    -m644 drivers/dahdi/xpp/xpp.conf  %{buildroot}%{_sysconfdir}/dahdi/xpp.conf
 for rules in %{buildroot}%{_sysconfdir}/udev/rules.d/*.rules
 do

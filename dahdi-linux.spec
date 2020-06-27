@@ -96,11 +96,11 @@ gcc_header_search_path=(
     /usr/src/linux/include/linux/compiler-gcc4.h
     %{kernel_source default}/include/linux/compiler-gcc4.h
 )
-for gcc_header in "${gcc_header_search_path[@]}"; do
-    if [ -f $gcc_header ]; then
-        break
-    fi
-done
+#for gcc_header in "${gcc_header_search_path[@]}"; do
+#    if [ -f $gcc_header ]; then
+#        break
+#    fi
+#done
 for ver in $(seq 5 8); do
     %{__install} -D -m644 $gcc_header drivers/dahdi/linux/compiler-gcc$ver.h
 done

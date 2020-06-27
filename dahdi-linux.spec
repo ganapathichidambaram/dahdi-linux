@@ -56,6 +56,7 @@ Source1:      firmware-20180403.tar.xz
 
 # RHEL and derivatives comes without kernel-source package
 # This is snapshot of OSLEC from tree of kernel 2.6.32
+Source99:      linux-stable-e45c6f7.tar.gz
 
 # Kernel header file for GCC 5.x
 Source199:     compiler-gcc5.h
@@ -108,12 +109,12 @@ done
 # OSLEC echo cancellation
 %{__mkdir} drivers/staging
 %if 0%{?build_echo}
-#%if 0%{?suse_version}
-#%{__cp} -r /usr/src/linux/drivers/staging/echo linux/drivers/staging/
-#%else
-#%{__tar} -zxf %{S:99} -C linux/drivers/staging
-#%{__mv} linux/drivers/staging/linux-* linux/drivers/staging/echo
-#%endif
+%if 0%{?suse_version}
+%{__cp} -r /usr/src/linux/drivers/staging/echo linux/drivers/staging/
+%else
+%{__tar} -zxf %{S:99} -C linux/drivers/staging
+%{__mv} linux/drivers/staging/linux-* linux/drivers/staging/echo
+%endif
 echo 'obj-m += echo.o' > drivers/staging/echo/Kbuild
 %else
 %{__mkdir} drivers/staging/echo

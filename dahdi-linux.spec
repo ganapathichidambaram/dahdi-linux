@@ -58,7 +58,7 @@ Source1:      firmware-20180403.tar.xz
 # This is snapshot of OSLEC from tree of kernel 2.6.32
 
 # Kernel header file for GCC 5.x
-#Source199:     compiler-gcc5.h
+Source199:     compiler-gcc5.h
 
 # [PATCH] build fix: external CFLAGS are ignored
 #Patch0:        https://github.com/asterisk/dahdi-tools/commit/99e3c572d1ce4b2c3e0195499b84cb56ade94bea.patch
@@ -95,12 +95,13 @@ pppd plugin to implement PPP over DAHDI HDLC channel.
 gcc_header_search_path=(
     /usr/src/linux/include/linux/compiler-gcc4.h
     %{kernel_source default}/include/linux/compiler-gcc4.h
+    %{S:199}
 )
-#for gcc_header in "${gcc_header_search_path[@]}"; do
-#    if [ -f $gcc_header ]; then
-#        break
-#    fi
-#done
+for gcc_header in "${gcc_header_search_path[@]}"; do
+    if [ -f $gcc_header ]; then
+        break
+    fi
+done
 for ver in $(seq 5 8); do
     %{__install} -D -m644 $gcc_header drivers/dahdi/linux/compiler-gcc$ver.h
 done

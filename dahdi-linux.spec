@@ -135,7 +135,8 @@ do
 done
 popd
 DAHDI_VERSION=%{drvver} build_tools/make_version_h > include/dahdi/version.h
-%{__sed} -ri '/^man_MANS\s*=.*perl_mans/ d' tools/xpp/Makefile.*
+#Disabled where there is no tools
+#%{__sed} -ri '/^man_MANS\s*=.*perl_mans/ d' tools/xpp/Makefile.*
 
 %build
 %define topdir %{_builddir}/%{realname}-%{drvver}+%{utilver}

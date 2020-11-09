@@ -139,7 +139,7 @@ DAHDI_VERSION=%{drvver} build_tools/make_version_h > include/dahdi/version.h
 #%{__sed} -ri '/^man_MANS\s*=.*perl_mans/ d' tools/xpp/Makefile.*
 
 %build
-%define topdir %{_builddir}/%{realname}-%{drvver}+%{utilver}
+%define topdir %{_builddir}/%{realname}-%{drvver}
 export EXTRA_CFLAGS='-DVERSION=\"%version\"'
 pushd drivers
 mkdir obj

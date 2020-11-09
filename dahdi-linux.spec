@@ -61,7 +61,7 @@ Source10: kmodtool
 ###################################################################
 Summary: The DAHDI project
 Name: dahdi-linux
-Version:          2.11.0
+Version:          2.11.1
 Release:          <RELEASE>1%{?_rc:.rc%{_rc}}%{?_beta:.beta%{_beta}}%{?dist}
 License: GPL
 Group: Utilities/System

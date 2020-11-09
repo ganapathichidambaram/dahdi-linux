@@ -1,265 +1,245 @@
-%define realname dahdi-linux
-%define drvver   2.11.1
-%define utilver  2.11.1
-%define srcext   tar.gz
-
-%define ppp_pkg_version %(rpm -q --qf '%%{version}' ppp-devel)
-%define pppd_version    %(sed -r 's/^([0-9.]+[0-9]).*$/\\1/g' <<< %{ppp_pkg_version})
-
-# turn off the generation of debuginfo rpm  (RH9) ??
+###################################################################
+#
+#  dahdi-linux.spec - used to generate dahdi-linux rpms
+#  For more info: http://www.rpm.org/max-rpm/ch-rpm-basics.html
+#
+#  This spec file uses default directories:
+#  /usr/src/redhat/SOURCES - orig source, patches, icons, etc.
+#  /usr/src/redhat/SPECS - spec files
+#  /usr/src/redhat/BUILD - sources unpacked & built here
+#  /usr/src/redhat/RPMS - binary package files
+#  /usr/src/redhat/SRPMS - source package files
+#
+###################################################################
+#
+#  Global Definitions
+#
+###################################################################
+#%{!?kversion: %define kversion 2.6.18-164.2.1.el5}
+#%define kversion %(uname -r|sed -e 's/\.\w*$//g')
+#%define kversion %(uname -r |/usr/bin/rev | cut -d '.' -f 2- |/usr/bin/rev)
+%define kversion %(verrel=$(ls -Ud /usr/src/kernels/* | sort -V | tail -n 1); echo ${verrel##*/})
 %global debug_package %{nil}
 
-%if 0%{?suse_version} >= 1310
-%undefine build_echo
+Source10: kmodtool
+%if 0%{?rhel} >= 6
+  %define kmodtool /usr/lib/rpm/redhat/kmodtool
 %else
-%define build_echo 1
+  %define kmodtool bash %{SOURCE10}
 %endif
 
-Name:          dahdi-linux
-Version:       %{drvver}
-Release:       <RELEASE>%{?dist}
-License:       GPL-2.0 and LGPL-2.1
-Group:         System/Kernel
-URL:           http://www.asterisk.org/dahdi
-Summary:       DAHDI Telephony Interface Driver
 
-# Install-time parameters
-Requires:      udev
+%define kmod_name dahdi-linux
+%define kverrel %(%{kmodtool} verrel %{?kversion} 2>/dev/null)
 
-# Build-time parameters
-BuildRequires: perl
-%if 0%{?rhel}
-%ifarch %ix86
-BuildArch:     i686
-%endif
-%endif
-BuildRequires: autoconf automake libtool
-BuildRequires: %kernel_module_package_buildreqs
-%if 0%{?suse_version}
-BuildRequires: kernel-source kernel-syms modutils insserv-compat
+%if 0%{?rhel} == 5
+  %ifarch i686
+    %define kvariants "" xen PAE
+  %endif
+  %ifarch x86_64
+    %define kvariants "" xen
+  %endif
 %endif
 
-%if 0%{?fedora_version} >= 28 || 0%{?rhel} >=8
-BuildRequires: kernel-rpm-macros elfutils-libelf-devel kernel-abi-whitelists
+%if 0%{?rhel} >= 6
+  %define kvariants ""
 %endif
 
-%if 0%{?fedora_version} >= 23
-BuildRequires: sqlite
-BuildRequires: python3-libs python3
+%{!?kvariants: %define kvariants %{?upvar} %{?smpvar} %{?xenvar} %{?kdumpvar} %{?PAEvar}}
+# hint: this can he overridden with "--define kvariant foo bar" on the rpmbuild command line, e.g.
+# --define 'kvariant "" smp'
+
+
+#Workaround for 64 bit CPUs
+%define _lib lib
+
+###################################################################
+#
+#  The Preamble
+#  information that is displayed when users request info
+#
+###################################################################
+Summary: The DAHDI project
+Name: dahdi-linux
+Version:          2.11.0
+Release:          <RELEASE>1%{?_rc:.rc%{_rc}}%{?_beta:.beta%{_beta}}%{?dist}
+License: GPL
+Group: Utilities/System
+Source: %{name}-%{version}.tar.gz
+Source1: oslec-echo-linux-3.10.99.tar.gz
+Patch0: dahdi-kmodtoolpath.diff
+Patch1: dahdi-no-fwload.diff
+BuildRoot: %{_tmppath}/%{name}-%{version}-root
+URL: http://www.asterisk.org/
+Vendor: Digium, Inc.
+Packager: Jason Parker <jparker@digium.com>
+#Requires: yum-kmod
+Requires: dahdi-firmware
+BuildRequires: kernel
+BuildRequires: kernel-devel
+%if 0%{?rhel} == 6
+BuildRequires: kabi-whitelists
+%endif
+%if 0%{?rhel} == 7
+BuildRequires: kernel-abi-whitelists
+%endif
+%if 0%{?rhel} == 8
+BuildRequires: kernel-abi-whitelists
+BuildRequires: kernel-rpm-macros
+BuildRequires: elfutils-libelf-devel
 %endif
 
-BuildRequires: ppp-devel
-BuildRequires: libusb-devel libselinux-devel udev
-BuildRoot:     %{_tmppath}/%{name}-%{version}-build
-Source0:       http://downloads.asterisk.org/pub/telephony/dahdi-linux-complete/releases/%{realname}-%{drvver}.%{srcext}
-Source1:      firmware-20180403.tar.xz
-
-# RHEL and derivatives comes without kernel-source package
-# This is snapshot of OSLEC from tree of kernel 2.6.32
-Source99:      linux-stable-e45c6f7.tar.gz
-
-# Kernel header file for GCC 5.x
-Source199:     compiler-gcc5.h
-
-# [PATCH] build fix: external CFLAGS are ignored
-#Patch0:        https://github.com/asterisk/dahdi-tools/commit/99e3c572d1ce4b2c3e0195499b84cb56ade94bea.patch
-
-# Support for Linux kernel 4.11+
-#Patch11:       https://issues.asterisk.org/jira/secure/attachment/55523/0001-signal_pending-is-now-in-linux-sched-signal.h-includ.patch
-#Patch12:       https://issues.asterisk.org/jira/secure/attachment/55524/0002-atomic_read-refcount_read.patch
-
-
+#%if 0%{?fedora_version} >= 23
+#BuildRequires: sqlite
+#BuildRequires: python3-libs python3
+#%endif
 
 %description
-DAHDI Telephony Interface Driver.
+The open source DAHDI project
 
-%package KMP
-Summary:       Kernel modules of DAHDI Telephony Interface Driver
-Group:         System/Kernel
+%package devel
+Summary: DAHDI libraries and header files for development
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
 
-%description KMP
-Kernel modules of DAHDI Telephony Interface Driver.
+%description devel
+The static libraries and header files needed for building additional plugins/modules
 
-%package -n dahdi-ppp-plugin
-Summary:       PPP daemon plugin to implement PPP over DAHDI HDLC channel
-Group:         Productivity/Networking/PPP
-Requires:      ppp = %{ppp_pkg_version}
+%define kmod_version %{version}
+%define kmod_release %{release}
 
-%description -n dahdi-ppp-plugin
-pppd plugin to implement PPP over DAHDI HDLC channel.
+# magic hidden here:
+#%{expand:%(%{kmodtool} rpmtemplate_kmp %{kmod_name} %{kverrel} %{kvariants} 2>/dev/null)}
+%{expand:%(%{kmodtool} rpmtemplate %{kmod_name} %{kverrel} %{kvariants} 2>/dev/null)}
 
+%global debug_package %{nil}
+
+###################################################################
+#
+#  The Prep Section
+#  If stuff needs to be done before building, this is the section
+#  Use shell scripts to do stuff like uncompress and cd into source dir
+#  %setup macro - cleans old build trees, uncompress and extracts original source
+#
+###################################################################
 %prep
-%setup -n %{realname}-%{drvver}
-#%patch11 -p1 -d linux
-#%patch12 -p1 -d linux
-# GCC >= 5.x support
-gcc_header_search_path=(
-    /usr/src/linux/include/linux/compiler-gcc4.h
-    %{kernel_source default}/include/linux/compiler-gcc4.h
-    %{S:199}
-)
-for gcc_header in "${gcc_header_search_path[@]}"; do
-    if [ -f $gcc_header ]; then
-        break
-    fi
-done
-for ver in $(seq 5 8); do
-    %{__install} -D -m644 $gcc_header drivers/dahdi/linux/compiler-gcc$ver.h
-done
-# OSLEC echo cancellation
-%{__mkdir} drivers/staging
-%if 0%{?build_echo}
-%if 0%{?suse_version}
-%{__cp} -r /usr/src/linux/drivers/staging/echo drivers/staging/
-%else
-%{__tar} -zxf %{S:99} -C drivers/staging
-%{__mv} drivers/staging/linux-* drivers/staging/echo
-%endif
-echo 'obj-m += echo.o' > drivers/staging/echo/Kbuild
-%else
-%{__mkdir} drivers/staging/echo
-find /usr/src/linux/drivers -name oslec.h -exec cp -v {} drivers/staging/echo/ \;
-%endif
-# Firmwares
-#%{__cp} %{S:1} /
-#pushd linux
-#%{__tar} -zxf drivers/dahdi/firmware/dahdi-fwload-*.tar.gz
-#%{__tar} -xf *.tar.xz
-#popd
+%setup -c -n %{name}-%{version}
 
-pushd drivers/dahdi/firmware
-%{__tar} -xf *.tar.xz
-for fw in *.tar.gz*
-do
-  %{__tar} -zxf ${fw}
-done
-popd
-DAHDI_VERSION=%{drvver} build_tools/make_version_h > include/dahdi/version.h
-#Disabled where there is no tools
-#%{__sed} -ri '/^man_MANS\s*=.*perl_mans/ d' tools/xpp/Makefile.*
+cd %{name}-%{version}/
 
+gzip -dc %{SOURCE1} | tar -xvvf -
+
+%patch0 -p0
+%patch1 -p0
+
+echo %{version} > .version
+cd ../
+for kvariant in %{kvariants} ; do
+    cp -a %{name}-%{version} _kmod_build_$kvariant
+done
+cd %{name}-%{version}
+
+###################################################################
+#
+#  The Build Section
+#  Use shell scripts and do stuff that makes the build happen, i.e. make
+#
+###################################################################
 %build
-%define topdir %{_builddir}/%{realname}-%{drvver}+%{utilver}
-export EXTRA_CFLAGS='-DVERSION=\"%version\"'
-pushd drivers
-mkdir obj
-for flavor in %flavors_to_build; do
-    %{__mkdir_p} obj/$flavor
-    %{__cp} -r dahdi staging obj/$flavor
-    %{__make} -C %{kernel_source $flavor} \
-      M=$PWD/obj/$flavor/dahdi/oct612x
-    %{__make} -C %{kernel_source $flavor} modules \
-      M=$PWD/obj/$flavor/dahdi \
-      DAHDI_INCLUDE=%{topdir}/include \
-      HOTPLUG_FIRMWARE=yes \
-      DAHDI_MODULES_EXTRA="dahdi_echocan_oslec.o %{?build_echo:../staging/echo/echo.o}" \
-      DAHDI_BUILD_ALL=m
-done
-popd
-#pushd tools
-#%configure \
-# --with-dahdi=%{topdir}/linux \
-# --with-usb \
-# --with-selinux \
-# --with-ppp \
-# CFLAGS="%{optflags} -Wno-format-truncation" \
-# LDFLAGS="-Wl,--as-needed -Wl,--strip-all"
-# Disable am--refresh target
-#%{__sed} -ri \
-# -e 's/^\tam--refresh /\t/' \
-# -e '/^am--refresh/,/^$/ d' \
-# Makefile
-#%{__make} %{?_smp_mflags} all
-#popd
-
-%install
-export INSTALL_MOD_PATH=$RPM_BUILD_ROOT
-%if 0%{?suse_version}
-export INSTALL_MOD_DIR=updates
-%else
-export INSTALL_MOD_DIR=extra/%{name}
-%endif
-%{__make} \
- install-include \
- install-firmware \
- install-xpp-firm \
- HOTPLUG_FIRMWARE=yes \
- DESTDIR=%{buildroot}
-pushd drivers
-for flavor in %flavors_to_build; do
-    %{__make} -C %{kernel_source $flavor} modules_install \
-      M=$PWD/obj/$flavor/dahdi
-    [ -f %{buildroot}/lib/modules/*-$flavor/staging/echo/echo.ko ] && \
-      %{__mv} -f %{buildroot}/lib/modules/*-$flavor/staging/echo/echo.ko %{buildroot}/lib/modules/*-$flavor/updates
-done
-popd
-export PATH=$PATH:/sbin:/usr/sbin
-pushd tools
-%{__make} install DESTDIR=%{buildroot}
-%{__make} config  DESTDIR=%{buildroot}
-popd
-#%{__install} -D -m755 tools/dahdi.init    %{buildroot}%{_initrddir}/dahdi
-%{__install}    -m644 drivers/dahdi/xpp/xpp.conf  %{buildroot}%{_sysconfdir}/dahdi/xpp.conf
-for rules in %{buildroot}%{_sysconfdir}/udev/rules.d/*.rules
+echo %{version} > .version
+echo %{kversion}
+for kvariant in %{kvariants}
 do
-%if 0%{?suse_version} && ! 0%{?sles_version}
-  %{__install} -d -m755 %{buildroot}/usr/lib/udev/rules.d
-  %{__mv} -f ${rules} %{buildroot}/usr/lib/udev/rules.d/98-$(basename ${rules})
-%else
-  %{__mv} -f ${rules} %{buildroot}/etc/udev/rules.d/98-$(basename ${rules})
-%endif
+    pushd _kmod_build_$kvariant
+    make KVERS="%{kverrel}${kvariant}" modules
+    popd
 done
-%{__mkdir_p} %{buildroot}%{perl_vendorlib}
-%{__cp} -r %{buildroot}%{perl_sitelib}/* %{buildroot}%{perl_vendorlib}/
-%{__rm} -rf %{buildroot}%{perl_sitelib}
-%if 0%{?suse_version}
-%{__ln_s} %{_initrddir}/dahdi %{buildroot}%{_sbindir}/rcdahdi
-%endif
 
+
+###################################################################
+#
+#  The Install Section
+#  Use shell scripts and perform the install, like 'make install',
+#  but can also be shell commands, i.e. cp, mv, install, etc..
+#
+###################################################################
+%install
+mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/udev/rules.d/
+cd %{name}-%{version}
+make DESTDIR=$RPM_BUILD_ROOT install-include
+cd ../
+
+for kvariant in %{kvariants}
+do
+    pushd _kmod_build_$kvariant
+    make DESTDIR=$RPM_BUILD_ROOT KVERS="%{kverrel}${kvariant}" install-modules
+    popd
+done
+
+###################################################################
+#
+#  Install and Uninstall
+#  This section can have scripts that are run either before/after
+#  an install process, or before/after an uninstall process
+#  %pre - executes prior to the installation of a package
+#  %post - executes after the package is installed
+#  %preun - executes prior to the uninstallation of a package
+#  %postun - executes after the uninstallation of a package
+#
+###################################################################
+%post
+ldconfig
+
+###################################################################
+#
+#  Verify
+#
+###################################################################
+%verifyscript
+
+###################################################################
+#
+#  Clean
+#
+###################################################################
 %clean
-[ "%{buildroot}" != "/" ] && rm -rf %{buildroot}
+cd $RPM_BUILD_DIR
+%{__rm} -rf %{name}-%{version}
+%{__rm} -rf /var/log/%{name}-sources-%{version}-%{release}.make.err
+%{__rm} -rf $RPM_BUILD_ROOT
 
+###################################################################
+#
+#  File List
+#
+###################################################################
 %files
-%defattr(-,root,root)
-%doc LICENSE LICENSE.LGPL README UPGRADE.txt
-%doc drivers/dahdi/xpp/firmwares/LICENSE.firmware
-%if 0%{?suse_version} && ! 0%{?sles_version}
-%dir /usr/lib/udev/rules.d/
-%dir /usr/lib/udev/
-/usr/lib/udev/rules.d/98-*.rules
-%else
-%dir %{_sysconfdir}/udev/rules.d/
-%dir %{_sysconfdir}/udev/
-%config %{_sysconfdir}/udev/rules.d/98-*.rules
-%endif
-%dir /usr/share/dahdi/handle_device.d
-%dir /usr/share/dahdi/span_config.d
-%dir /usr/share/dahdi
-/lib/firmware/dahdi-fw-*.bin
-/usr/share/dahdi/*.hex
-/usr/share/dahdi/XppConfig.pm
-/usr/share/dahdi/init_card_*
-/usr/share/dahdi/dahdi_auto_assign_compat
-/usr/share/dahdi/dahdi_handle_device
-/usr/share/dahdi/dahdi_span_config
-/usr/share/dahdi/handle_device.d/10-span-types
-/usr/share/dahdi/handle_device.d/20-span-assignments
-/usr/share/dahdi/span_config.d/10-dahdi-cfg
-/usr/share/dahdi/span_config.d/20-fxotune
-/usr/share/dahdi/span_config.d/50-asterisk
-%exclude /lib/firmware/.dahdi-fw*
+#
+#  Documents
+#
+#%doc UPGRADE.txt
 
-%files -n dahdi-ppp-plugin
-%defattr(-,root,root)
-%{_libdir}/pppd/%{pppd_version}/dahdi.so
-%exclude %{_libdir}/pppd/%{pppd_version}/dahdi.a
-%exclude %{_libdir}/pppd/%{pppd_version}/dahdi.la
+%config %{_sysconfdir}/udev/rules.d/
 
-%pre
-/usr/sbin/groupadd -r asterisk 2> /dev/null || :
-/usr/sbin/useradd -r -o -s /bin/false -c "User for Asterisk" -d /var/lib/asterisk -g asterisk asterisk 2> /dev/null || :
+%files devel
+#
+#  Header Files
+#
+%defattr(-, root, root)
+%{_includedir}/dahdi/dahdi_config.h
+%{_includedir}/dahdi/fasthdlc.h
+%{_includedir}/dahdi/kernel.h
+%{_includedir}/dahdi/user.h
+%{_includedir}/dahdi/wctdm_user.h
 
-
+#
+# Changelog
+#
 %changelog
 * Sat Jun  27 2020 ganapathi.rj@gmail.com
 - Initial RPM
+
+
+
+
+

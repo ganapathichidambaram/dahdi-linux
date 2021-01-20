@@ -75,8 +75,8 @@ Vendor: Digium, Inc.
 Packager: Jason Parker <jparker@digium.com>
 #Requires: yum-kmod
 Requires: dahdi-firmware
-BuildRequires: kernel
-BuildRequires: kernel-devel
+BuildRequires: kernel <= 4.18.0-193.28.1
+BuildRequires: kernel-devel <= 4.18.0-193.28.1
 %if 0%{?rhel} == 6
 BuildRequires: kabi-whitelists
 %endif

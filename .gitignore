@@ -16,6 +16,7 @@ cscope.*
 *.symvers
 *.markers
 .*.o.d
+.vs
 
 README.html
 modules.order

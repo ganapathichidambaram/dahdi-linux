@@ -75,8 +75,8 @@ Vendor: Digium, Inc.
 Packager: Jason Parker <jparker@digium.com>
 #Requires: yum-kmod
 Requires: dahdi-firmware
-BuildRequires: kernel <= 4.18.0-193
-BuildRequires: kernel-devel <= 4.18.0-193
+BuildRequires: kernel
+BuildRequires: kernel-devel
 %if 0%{?rhel} == 6
 BuildRequires: kabi-whitelists
 %endif
@@ -238,7 +238,6 @@ cd $RPM_BUILD_DIR
 %changelog
 * Sat Jun  27 2020 ganapathi.rj@gmail.com
 - Initial RPM
-
 
 
 

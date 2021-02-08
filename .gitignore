@@ -10,7 +10,7 @@
 *.ko.unsigned
 *.cmd
 *.order
-*.tar.gz
+#*.tar.gz
 tags
 cscope.*
 *.symvers
